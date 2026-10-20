@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+
+permissions:
+  contents: read
+
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Забрать код
+        uses: actions/checkout@v4
+
+      - name: Поставить Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Поставить зависимости
+        run: pip install -r requirements.txt
+
+      - name: Линтер
+        run: ruff check .
+
+      - name: Тесты
+        run: pytest
+        env:
+          PYTHONPATH: .
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Забрать код вместе с историей
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Поиск секретов
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
